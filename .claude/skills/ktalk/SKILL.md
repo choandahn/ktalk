@@ -1,26 +1,6 @@
 ---
 name: ktalk
 description: KakaoTalk CLI for listing chats, reading history, searching messages, streaming new messages, and sending via macOS Accessibility API.
-metadata:
-  {
-    "openclaw":
-      {
-        "emoji": "💬",
-        "os": ["darwin"],
-        "requires": { "bins": ["ktalk"] },
-        "install":
-          [
-            {
-              "id": "brew",
-              "kind": "brew",
-              "tap": "choandahn/ktalk",
-              "formula": "choandahn/ktalk/ktalk",
-              "bins": ["ktalk"],
-              "label": "Install ktalk (brew)",
-            },
-          ],
-      },
-  }
 ---
 
 # ktalk
