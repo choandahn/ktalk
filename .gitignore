@@ -1,6 +1,8 @@
 .build/
 bin/
 .swiftpm/
+.omc/
+skills/
 *.o
 *.d
 .DS_Store
