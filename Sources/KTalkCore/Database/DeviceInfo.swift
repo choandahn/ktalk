@@ -1,4 +1,5 @@
 import CommonCrypto
+import CSQLCipher
 import Foundation
 
 /// 로컬 시스템에서 기기 UUID와 KakaoTalk 사용자 ID를 추출합니다.
@@ -50,11 +51,17 @@ public enum DeviceInfo {
     /// KakaoTalk preferences plist에서 사용자 ID를 추출합니다.
     ///
     /// 다음 전략을 순서대로 시도합니다:
+    /// 0. Cache.db의 talk-user-id HTTP 헤더 (가장 신뢰성 높음)
     /// 1. FSChatWindowTransparency 공통 접미사 (레거시)
     /// 2. 직접 키 조회 (userId, user_id 등)
     /// 3. plist 수정 키의 SHA-512 해시 역산
     /// 4. FSChatWindowFrame_ 공통 접미사
     public static func userId() throws -> Int {
+        // 전략 0: Cache.db에서 talk-user-id 헤더 읽기
+        if let id = userIdFromCacheDB() {
+            return id
+        }
+
         let plistPath = preferencesPath
         guard FileManager.default.fileExists(atPath: plistPath) else {
             throw KTalkError.plistNotFound(plistPath)
@@ -198,6 +205,83 @@ public enum DeviceInfo {
             }
         }
         return nil
+    }
+
+    // MARK: - Cache.db userId 추출
+
+    /// Cache.db의 NSURLCache에서 talk-user-id HTTP 헤더를 읽습니다.
+    /// KakaoTalk 클라이언트는 API 요청 시 talk-user-id 헤더에 userId를 포함하며,
+    /// macOS NSURLCache가 이를 Cache.db에 저장합니다.
+    private static func userIdFromCacheDB() -> Int? {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let cacheDBPath = "\(home)/Library/Containers/com.kakao.KakaoTalkMac/Data/Library/Caches/Cache.db"
+        guard FileManager.default.fileExists(atPath: cacheDBPath) else { return nil }
+
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(cacheDBPath, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK else {
+            return nil
+        }
+        defer { sqlite3_close(db) }
+
+        let sql = """
+            SELECT b.request_object FROM cfurl_cache_response r
+            JOIN cfurl_cache_blob_data b ON r.entry_ID = b.entry_ID
+            WHERE r.request_key LIKE '%/me/%' OR r.request_key LIKE '%talk-user-id%'
+            LIMIT 50
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return nil }
+        defer { sqlite3_finalize(stmt) }
+
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let blob = sqlite3_column_blob(stmt, 0) else { continue }
+            let len = sqlite3_column_bytes(stmt, 0)
+            let data = Data(bytes: blob, count: Int(len))
+
+            // bplist로 시작하는 plist에서 talk-user-id 값을 찾음
+            if let userId = extractTalkUserIdFromPlist(data) {
+                return userId
+            }
+            // 일반 텍스트에서도 검색
+            if let text = String(data: data, encoding: .utf8),
+               let userId = extractTalkUserIdFromText(text) {
+                return userId
+            }
+        }
+        return nil
+    }
+
+    private static func extractTalkUserIdFromPlist(_ data: Data) -> Int? {
+        guard let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) else {
+            return nil
+        }
+        return searchForTalkUserId(in: plist)
+    }
+
+    private static func searchForTalkUserId(in obj: Any) -> Int? {
+        if let dict = obj as? [String: Any] {
+            if let val = dict["talk-user-id"] {
+                if let id = val as? Int, id > 0 { return id }
+                if let str = val as? String, let id = Int(str), id > 0 { return id }
+            }
+            for (_, v) in dict {
+                if let id = searchForTalkUserId(in: v) { return id }
+            }
+        } else if let arr = obj as? [Any] {
+            for item in arr {
+                if let id = searchForTalkUserId(in: item) { return id }
+            }
+        }
+        return nil
+    }
+
+    private static func extractTalkUserIdFromText(_ text: String) -> Int? {
+        guard let range = text.range(of: #"talk-user-id[:\s]+(\d+)"#, options: .regularExpression) else {
+            return nil
+        }
+        let match = text[range]
+        guard let numRange = match.range(of: #"\d+"#, options: .regularExpression) else { return nil }
+        return Int(match[numRange])
     }
 
     // MARK: - Private Helpers
