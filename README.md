@@ -1,128 +1,101 @@
-# ktalk
+# 💬 ktalk — KakaoTalk CLI for macOS
 
-macOS의 KakaoTalk 데이터베이스에 대한 CLI 인터페이스입니다. 채팅 조회, 메시지 검색, 실시간 스트리밍, 메시지 전송을 지원합니다.
+A macOS CLI to read, search, stream, and send KakaoTalk messages. Read-only database access via SQLCipher; sending uses macOS Accessibility API (no private APIs).
 
-## 요구사항
+## Features
+- List chats, view history, search messages, or stream new messages in real-time.
+- Send text messages via macOS Accessibility API (no private APIs).
+- Full-text search across all conversations.
+- JSON output for programmatic integration and AI agent tooling.
+- JSON-RPC 2.0 server for stdin/stdout integration.
+- Encrypted database auto-decryption (SQLCipher + PBKDF2 key derivation).
+- Read-only DB access — never modifies KakaoTalk data.
 
-- macOS 14 (Sonoma) 이상
-- KakaoTalk 설치 및 로그인 상태
-- **Full Disk Access** 권한 허용 (시스템 설정 → 개인 정보 보호 및 보안 → 전체 디스크 접근권한)
-- [Homebrew](https://brew.sh) 및 `sqlcipher`
+## Requirements
+- macOS 14+ with KakaoTalk installed and signed in.
+- Full Disk Access for your terminal to read the KakaoTalk database.
+- Accessibility permission for your terminal to control KakaoTalk (for sending).
 
-## 설치
+## Install
 
-### Homebrew (추천)
-
+### Homebrew (recommended)
 ```bash
 brew tap choandahn/ktalk
 brew install ktalk
 ```
 
-### 소스에서 빌드
-
+### Build from source
 ```bash
 brew install sqlcipher
 git clone https://github.com/choandahn/ktalk.git
 cd ktalk
 make build
 sudo make install
+# binary at ./bin/ktalk
 ```
 
-## 사용법
+## Commands
+- `ktalk status` — check KakaoTalk installation, database access, and app state.
+- `ktalk chats [--limit 20] [--json]` — list recent conversations.
+- `ktalk history --chat-id <id> [--limit 50] [--since 24h] [--start 2025-01-01T00:00:00Z] [--end 2025-02-01T00:00:00Z] [--json]`
+- `ktalk search <query> [--limit 20] [--json]` — full-text message search.
+- `ktalk watch [--chat-id <id>] [--since-log-id <n>] [--interval 2] [--json]` — stream new messages.
+- `ktalk send --to <name> --text "message" [--self]` — send a message.
+- `ktalk rpc` — start JSON-RPC 2.0 server (stdin/stdout).
+- `ktalk login [--status] [--clear]` — manage stored credentials.
+- `ktalk query "<SQL>"` — execute raw SQL against the database.
+- `ktalk schema` — dump database schema.
 
-### 시스템 상태 확인
-
+### Quick samples
 ```bash
+# system status
 ktalk status
-```
 
-### 대화 목록
+# list 5 chats
+ktalk chats --limit 5
 
-```bash
-ktalk chats
-ktalk chats --limit 20
+# list chats as JSON
 ktalk chats --json
-```
 
-### 메시지 히스토리
+# last 10 messages in a chat
+ktalk history --chat-id 285808228519222 --limit 10
 
-```bash
-ktalk history --chat-id ID
-ktalk history --chat-id ID --limit 50
-ktalk history --chat-id ID --since 24h
-ktalk history --chat-id ID --start 2024-01-01T00:00:00 --end 2024-01-31T23:59:59
-ktalk history --chat-id ID --json
-```
+# filter by date and emit JSON
+ktalk history --chat-id 285808228519222 --since 7d --json
 
-### 메시지 검색
+# search messages
+ktalk search "안녕" --limit 5
 
-```bash
-ktalk search "검색어"
-ktalk search "검색어" --limit 20
-ktalk search "검색어" --json
-```
-
-### 실시간 스트리밍
-
-```bash
-ktalk watch
-ktalk watch --chat-id ID
-ktalk watch --interval 2
+# live stream all new messages as JSON
 ktalk watch --json
-```
 
-### 메시지 전송
-
-```bash
+# send a message
 ktalk send --to "홍길동" --text "안녕하세요"
-ktalk send --to "나와의 채팅" --text "메모" --self
+
+# raw SQL query
+ktalk query "SELECT chatId, chatName FROM NTChatRoom LIMIT 5"
 ```
 
-### JSON-RPC 2.0 서버
+## JSON output
+`ktalk chats --json` emits a JSON array with fields: `id`, `type`, `displayName`, `memberCount`, `lastMessageId`, `lastMessageAt`, `unreadCount`.
 
+`ktalk history --json` and `ktalk search --json` emit JSON with fields: `id`, `chatId`, `senderId`, `senderName`, `text`, `type`, `createdAt`, `isFromMe`.
+
+`ktalk watch --json` emits one JSON object per line (NDJSON) as new messages arrive.
+
+## Permissions troubleshooting
+If you see "데이터베이스 열기 실패" or empty output:
+1. Grant **Full Disk Access**: System Settings → Privacy & Security → Full Disk Access → add your terminal.
+2. Ensure KakaoTalk is installed and signed in.
+3. For sending, grant **Accessibility**: System Settings → Privacy & Security → Accessibility → add your terminal.
+
+## Testing
 ```bash
-ktalk rpc
+make test
 ```
 
-### 자격증명 관리
+## Core library
+The reusable Swift core lives in `Sources/KTalkCore` and is consumed by the CLI target. Apps can depend on the `KTalkCore` library target directly.
 
-```bash
-ktalk login
-ktalk login --status
-ktalk login --clear
-```
-
-### Raw SQL 실행
-
-```bash
-ktalk query "SELECT * FROM NTChatRoom LIMIT 10"
-```
-
-### DB 스키마 출력
-
-```bash
-ktalk schema
-```
-
-## Makefile 커맨드
-
-| 커맨드 | 설명 |
-|--------|------|
-| `make build` | Release 빌드 후 `./bin/ktalk`에 복사 |
-| `make debug` | Debug 빌드 |
-| `make test` | 테스트 실행 |
-| `make run ARGS="chats"` | 개발 중 직접 실행 |
-| `make install` | `/usr/local/bin/ktalk`에 설치 |
-| `make clean` | 빌드 결과물 정리 |
-| `make lint` | SwiftLint 실행 (설치된 경우) |
-| `make format` | swift-format 실행 (설치된 경우) |
-
-## 보안 고려사항
-
-- KakaoTalk DB는 **읽기 전용(read-only)**으로만 접근합니다. 원본 데이터를 수정하지 않습니다.
-- 메시지 전송은 macOS **Accessibility API(AX 자동화)**를 사용합니다. Private API를 사용하지 않습니다.
-- DB 암호화 키는 기기 UUID와 사용자 ID에서 런타임에 유도되며, 디스크에 저장되지 않습니다.
-
-## 라이선스
-
+## License
 MIT
