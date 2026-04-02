@@ -16,6 +16,8 @@ run:
 
 install: build
 	cp bin/ktalk /usr/local/bin/ktalk
+	mkdir -p ~/.claude/skills/ktalk
+	cp .claude/skills/ktalk/SKILL.md ~/.claude/skills/ktalk/SKILL.md
 
 clean:
 	swift package clean
