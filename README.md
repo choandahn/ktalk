@@ -94,6 +94,9 @@ If you see "database open failed" or empty output:
 make test
 ```
 
+## Claude Code skill
+ktalk includes a [Claude Code skill](https://code.claude.com/docs/en/skills) at `.claude/skills/ktalk/SKILL.md`. When installed, Claude Code can automatically use ktalk when you ask about KakaoTalk messages.
+
 ## Core library
 The reusable Swift core lives in `Sources/KTalkCore` and is consumed by the CLI target. Apps can depend on the `KTalkCore` library target directly.
 
