@@ -89,7 +89,7 @@ ktalk login --clear
 ### Raw SQL 실행
 
 ```bash
-ktalk query "SELECT * FROM ZMSLOCALMESSAGE LIMIT 10"
+ktalk query "SELECT * FROM NTChatRoom LIMIT 10"
 ```
 
 ### DB 스키마 출력
@@ -115,7 +115,7 @@ ktalk schema
 
 - KakaoTalk DB는 **읽기 전용(read-only)**으로만 접근합니다. 원본 데이터를 수정하지 않습니다.
 - 메시지 전송은 macOS **Accessibility API(AX 자동화)**를 사용합니다. Private API를 사용하지 않습니다.
-- DB 암호화 키는 macOS Keychain에 안전하게 저장됩니다.
+- DB 암호화 키는 기기 UUID와 사용자 ID에서 런타임에 유도되며, 디스크에 저장되지 않습니다.
 
 ## 라이선스
 
