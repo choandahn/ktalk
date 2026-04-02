@@ -100,5 +100,8 @@ ktalk includes a [Claude Code skill](https://code.claude.com/docs/en/skills) at 
 ## Core library
 The reusable Swift core lives in `Sources/KTalkCore` and is consumed by the CLI target. Apps can depend on the `KTalkCore` library target directly.
 
+## Acknowledgements
+Inspired by [imsg](https://github.com/steipete/imsg) by Peter Steinberger.
+
 ## License
 MIT
