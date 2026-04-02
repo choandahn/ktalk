@@ -65,8 +65,8 @@ struct StatusCommand: ParsableCommand {
         // 앱 상태
         print("\n앱 상태")
         print("-------")
-        let appState = AppLifecycle.detectState()
-        print("상태:               \(appState.rawValue)")
+        let isRunning = AppLifecycle.isRunning()
+        print("실행 중:             \(isRunning ? "Yes" : "No")")
         let creds = CredentialStore()
         print("저장된 자격증명:      \(creds.hasCredentials ? "Yes" : "No")")
     }
