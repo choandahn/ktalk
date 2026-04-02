@@ -23,35 +23,35 @@ struct OutputFormatTests {
         )
     }
 
-    @Test("formatMessage는 대괄호로 시작한다")
+    @Test("formatMessage starts with opening bracket")
     func formatMessageStartsWithBracket() {
         let msg = makeMessage()
         let result = OutputFormatter.formatMessage(msg)
         #expect(result.hasPrefix("["))
     }
 
-    @Test("formatMessage는 ] sender: text 형식을 포함한다")
+    @Test("formatMessage contains ] sender: text format")
     func formatMessageContainsSenderAndText() {
         let msg = makeMessage(sender: "홍길동", text: "안녕!")
         let result = OutputFormatter.formatMessage(msg)
         #expect(result.contains("] 홍길동: 안녕!"))
     }
 
-    @Test("formatMessage — isFromMe이면 Me로 표시")
+    @Test("formatMessage — shows Me when isFromMe")
     func formatMessageFromMe() {
         let msg = makeMessage(sender: nil, text: "Hello", isFromMe: true)
         let result = OutputFormatter.formatMessage(msg)
         #expect(result.contains("] Me: Hello"))
     }
 
-    @Test("formatMessage — senderName nil이면 Unknown으로 표시")
+    @Test("formatMessage — shows Unknown when senderName is nil")
     func formatMessageUnknownSender() {
         let msg = makeMessage(sender: nil, text: "Hi", isFromMe: false)
         let result = OutputFormatter.formatMessage(msg)
         #expect(result.contains("] Unknown: Hi"))
     }
 
-    @Test("formatMessage — text nil이면 타입을 표시")
+    @Test("formatMessage — shows type when text is nil")
     func formatMessageNilText() {
         let msg = Message(
             id: 1, chatId: 1, senderId: 1, senderName: "A",
@@ -61,19 +61,19 @@ struct OutputFormatTests {
         #expect(result.contains("[photo]"))
     }
 
-    @Test("formatMessage 날짜 블록은 19자이다 (YYYY-MM-DD HH:mm:ss)")
+    @Test("formatMessage date block is 19 chars (YYYY-MM-DD HH:mm:ss)")
     func formatMessageDateBlockLength() {
         let msg = makeMessage()
         let result = OutputFormatter.formatMessage(msg)
         guard let closeIdx = result.firstIndex(of: "]") else {
-            Issue.record("] 미발견")
+            Issue.record("] not found")
             return
         }
         let dateBlock = String(result[result.index(after: result.startIndex)..<closeIdx])
         #expect(dateBlock.count == 19)
     }
 
-    @Test("formatChat은 ID와 이름을 포함한다")
+    @Test("formatChat contains ID and name")
     func formatChatContainsIdAndName() {
         let chat = Chat(
             id: 42,
@@ -89,7 +89,7 @@ struct OutputFormatTests {
         #expect(result.contains("테스트 채팅방"))
     }
 
-    @Test("formatChat은 멤버 수를 포함한다")
+    @Test("formatChat contains member count")
     func formatChatContainsMemberCount() {
         let chat = Chat(
             id: 1,

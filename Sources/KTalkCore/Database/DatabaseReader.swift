@@ -1,7 +1,7 @@
 import CSQLCipher
 import Foundation
 
-/// SQLCipher를 사용하여 KakaoTalk 암호화 SQLite 데이터베이스를 읽습니다.
+/// Reads the KakaoTalk encrypted SQLite database using SQLCipher.
 public final class DatabaseReader: @unchecked Sendable {
     private var db: OpaquePointer?
     public let databasePath: String
@@ -14,7 +14,7 @@ public final class DatabaseReader: @unchecked Sendable {
         close()
     }
 
-    /// 데이터베이스를 엽니다. cipher compatibility 3, 4를 순서대로 시도합니다.
+    /// Opens the database. Tries cipher compatibility modes 3 and 4 in order.
     public func open(key: String) throws {
         guard FileManager.default.fileExists(atPath: databasePath) else {
             throw KTalkError.databaseNotFound(databasePath)
@@ -37,16 +37,16 @@ public final class DatabaseReader: @unchecked Sendable {
                 try exec("PRAGMA cipher_default_compatibility = \(compat)")
                 try exec("PRAGMA KEY='\(key)'")
                 try exec("SELECT count(*) FROM sqlite_master")
-                return  // 성공
+                return  // success
             } catch {
                 continue
             }
         }
 
         throw KTalkError.databaseOpenFailed(
-            "모든 cipher compatibility 모드에서 PRAGMA key 실패 — " +
-            "데이터베이스가 암호화되어 있고 키가 잘못되었거나 SQLCipher가 링크되지 않았습니다. " +
-            "설치: brew install sqlcipher"
+            "PRAGMA key failed for all cipher compatibility modes — " +
+            "the database is encrypted and the key is wrong, or SQLCipher is not linked. " +
+            "Install: brew install sqlcipher"
         )
     }
 
@@ -55,9 +55,9 @@ public final class DatabaseReader: @unchecked Sendable {
         db = nil
     }
 
-    // MARK: - 쿼리
+    // MARK: - Queries
 
-    /// 채팅방 목록을 반환합니다.
+    /// Returns the list of chat rooms.
     public func chats(limit: Int = 50) throws -> [Chat] {
         let sql = """
             SELECT r.chatId, r.type, r.chatName, r.activeMembersCount,
@@ -85,7 +85,7 @@ public final class DatabaseReader: @unchecked Sendable {
         }
     }
 
-    /// 특정 채팅방의 메시지를 반환합니다.
+    /// Returns messages for a specific chat room.
     public func messages(chatId: Int64, since: Date? = nil, start: Date? = nil, end: Date? = nil, limit: Int = 50) throws -> [Message] {
         var conditions = ["m.chatId = ?"]
         var bindings: [SQLValue] = [.int64(chatId)]
@@ -133,7 +133,7 @@ public final class DatabaseReader: @unchecked Sendable {
         }
     }
 
-    /// 메시지 전문 검색.
+    /// Full-text message search.
     public func search(query searchQuery: String, limit: Int = 20) throws -> [Message] {
         let sql = """
             SELECT m.logId, m.chatId, m.authorId,
@@ -160,7 +160,7 @@ public final class DatabaseReader: @unchecked Sendable {
         }
     }
 
-    /// NTChatContext에서 로그인한 사용자의 ID를 가져옵니다.
+    /// Retrieves the logged-in user's ID from NTChatContext.
     public func myUserId() throws -> Int64 {
         let results = try query("SELECT userId FROM NTChatContext LIMIT 1", bind: []) { row in
             row.int64(0)
@@ -168,7 +168,7 @@ public final class DatabaseReader: @unchecked Sendable {
         return results.first ?? 0
     }
 
-    /// 지정한 logId 이후의 메시지와 채팅방 이름을 반환합니다 (동기화/감시용).
+    /// Returns messages after the given logId along with chat room names (for sync/watching).
     public func messagesSinceLogId(_ logId: Int64, limit: Int = 100) throws -> [(message: Message, chatName: String?)] {
         let sql = """
             SELECT m.logId, m.chatId,
@@ -200,7 +200,7 @@ public final class DatabaseReader: @unchecked Sendable {
         }
     }
 
-    /// 메시지 테이블의 최대 logId를 반환합니다.
+    /// Returns the maximum logId from the message table.
     public func maxLogId() throws -> Int64 {
         let results = try query("SELECT MAX(logId) FROM NTChatMessage", bind: []) { row in
             row.optionalInt64(0)
@@ -208,7 +208,7 @@ public final class DatabaseReader: @unchecked Sendable {
         return results.first.flatMap { $0 } ?? 0
     }
 
-    /// raw SQL 쿼리를 실행하고 결과를 딕셔너리 배열로 반환합니다.
+    /// Executes a raw SQL query and returns results as an array of dictionaries.
     public func rawQuery(_ sql: String) throws -> [[String: String]] {
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
@@ -234,7 +234,7 @@ public final class DatabaseReader: @unchecked Sendable {
         return results
     }
 
-    /// 데이터베이스 스키마의 SQL 문자열 목록을 반환합니다.
+    /// Returns the list of SQL strings for the database schema.
     public func schema() throws -> [String] {
         try query(
             "SELECT sql FROM sqlite_master WHERE type='table' ORDER BY name",
@@ -244,20 +244,20 @@ public final class DatabaseReader: @unchecked Sendable {
         }
     }
 
-    // MARK: - 정적 헬퍼
+    // MARK: - Static Helpers
 
-    /// KakaoTalk 타임스탬프(Unix 초)를 Date로 변환합니다.
-    /// 주의: CoreData 오프셋(978307200)을 사용하지 않습니다.
+    /// Converts a KakaoTalk timestamp (Unix seconds) to Date.
+    /// Note: Does not use the CoreData offset (978307200).
     public static func kakaoDate(_ timestamp: Int64) -> Date {
         Date(timeIntervalSince1970: Double(timestamp))
     }
 
-    /// 실제 KakaoTalk DB에 접근 가능한지 확인합니다.
+    /// Checks whether the real KakaoTalk DB is accessible.
     public static func canAccessRealDB() -> Bool {
         DeviceInfo.discoverDatabaseFile() != nil
     }
 
-    // MARK: - SQLite 헬퍼
+    // MARK: - SQLite Helpers
 
     enum SQLValue {
         case int(Int)
@@ -339,7 +339,7 @@ public final class DatabaseReader: @unchecked Sendable {
     }
 }
 
-// MARK: - Chat.ChatType 확장
+// MARK: - Chat.ChatType Extension
 
 extension Chat.ChatType {
     static func from(rawInt: Int) -> Self {

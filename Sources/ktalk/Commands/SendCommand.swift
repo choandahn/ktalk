@@ -5,22 +5,22 @@ import KTalkCore
 struct SendCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "send",
-        abstract: "UI 자동화를 통해 메시지 전송"
+        abstract: "Send a message via UI automation"
     )
 
-    @Option(name: .long, help: "수신 채팅방 이름 (부분 일치)")
+    @Option(name: .long, help: "Target chat room name (partial match)")
     var to: String
 
-    @Option(name: .long, help: "전송할 메시지 본문")
+    @Option(name: .long, help: "Message body to send")
     var text: String
 
-    @Flag(name: [.customLong("self")], help: "나와의 채팅으로 전송")
+    @Flag(name: [.customLong("self")], help: "Send to self chat")
     var selfChat = false
 
     func run() throws {
         let automator = KakaoAutomator()
         try automator.sendMessage(to: to, message: text, selfChat: selfChat)
-        let target = selfChat ? "나와의 채팅" : to
-        print("'\(target)'에 메시지를 전송했습니다.")
+        let target = selfChat ? "self chat" : to
+        print("Message sent to '\(target)'.")
     }
 }

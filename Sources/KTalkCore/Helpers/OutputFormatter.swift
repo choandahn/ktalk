@@ -1,9 +1,9 @@
 import Foundation
 
-/// 텍스트 출력 포맷 헬퍼.
+/// Text output format helpers.
 public enum OutputFormatter {
 
-    /// 메시지를 "[YYYY-MM-DD HH:mm:ss] 발신자: 텍스트" 형식으로 반환합니다.
+    /// Returns a message formatted as "[YYYY-MM-DD HH:mm:ss] sender: text".
     public static func formatMessage(_ msg: Message) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -20,7 +20,7 @@ public enum OutputFormatter {
         return "[\(timeStr)] \(sender): \(text)"
     }
 
-    /// SyncMessage(감시 메시지)를 "[YYYY-MM-DD HH:mm:ss] 발신자: 텍스트" 형식으로 반환합니다.
+    /// Returns a SyncMessage (watch message) formatted as "[YYYY-MM-DD HH:mm:ss] sender: text".
     public static func formatSyncMessage(_ msg: SyncMessage) -> String {
         let iso = ISO8601DateFormatter()
         let date = iso.date(from: msg.timestamp) ?? Date()
@@ -34,13 +34,13 @@ public enum OutputFormatter {
         return "[\(timeStr)] \(sender): \(text)"
     }
 
-    /// 채팅방을 "[ID] 이름 (N명) 마지막메시지시간" 형식으로 반환합니다.
+    /// Returns a chat room formatted as "[ID] name (N members) last-message-time".
     public static func formatChat(_ chat: Chat) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
 
         let lastTime = chat.lastMessageAt.map { " " + formatter.string(from: $0) } ?? ""
         let unread = chat.unreadCount > 0 ? " (\(chat.unreadCount) unread)" : ""
-        return "[\(chat.id)] \(chat.displayName) (\(chat.memberCount)명)\(unread)\(lastTime)"
+        return "[\(chat.id)] \(chat.displayName) (\(chat.memberCount) members)\(unread)\(lastTime)"
     }
 }

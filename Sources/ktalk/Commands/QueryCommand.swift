@@ -5,16 +5,16 @@ import KTalkCore
 struct QueryCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "query",
-        abstract: "raw SQL 쿼리 실행 (읽기 전용)"
+        abstract: "Execute raw SQL query (read-only)"
     )
 
-    @Argument(help: "실행할 SQL 쿼리")
+    @Argument(help: "SQL query to execute")
     var sql: String
 
-    @Option(name: .long, help: "데이터베이스 파일 경로")
+    @Option(name: .long, help: "Database file path")
     var db: String?
 
-    @Option(name: .long, help: "데이터베이스 암호화 키")
+    @Option(name: .long, help: "Database encryption key")
     var key: String?
 
     func run() throws {

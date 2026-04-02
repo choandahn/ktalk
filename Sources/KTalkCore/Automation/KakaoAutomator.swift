@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import Foundation
 
-/// KakaoTalk UI를 자동화하여 메시지를 전송합니다.
+/// Automates the KakaoTalk UI to send messages.
 public struct KakaoAutomator: Sendable {
 
     public static let bundleId = "com.kakao.KakaoTalkMac"
@@ -10,14 +10,14 @@ public struct KakaoAutomator: Sendable {
     public init() {}
 
     public func sendMessage(to chatName: String, message: String, selfChat: Bool = false) throws {
-        // 1. KakaoTalk 실행 및 로그인 확인
+        // 1. Launch KakaoTalk and verify login
         let stateBefore = AppLifecycle.detectState()
         try AppLifecycle.ensureReady(credentials: CredentialStore())
         if stateBefore != .loggedIn {
             Thread.sleep(forTimeInterval: 2.0)
         }
 
-        // 2. 활성화 및 앱 엘리먼트 획득
+        // 2. Activate and acquire app element
         try AXHelpers.activateApp(bundleId: Self.bundleId)
         let app = try AXHelpers.appElement(bundleId: Self.bundleId)
 
@@ -26,7 +26,7 @@ public struct KakaoAutomator: Sendable {
             throw AutomationError.noWindows
         }
 
-        // 3. 기존 채팅창 닫기
+        // 3. Close existing chat windows
         for w in windows where AXHelpers.identifier(w) != "Main Window" {
             _ = AXHelpers.closeWindow(w)
         }
@@ -34,13 +34,13 @@ public struct KakaoAutomator: Sendable {
             Thread.sleep(forTimeInterval: 0.3)
         }
 
-        // 4. 채팅 탭으로 전환
+        // 4. Switch to chat tab
         if let chatroomsTab = AXHelpers.findFirst(mainWindow, role: "AXCheckBox", identifier: "chatrooms") {
             _ = AXHelpers.performAction(chatroomsTab, kAXPressAction as String)
             Thread.sleep(forTimeInterval: 0.3)
         }
 
-        // 5. 채팅방 행 찾기
+        // 5. Find chat room row
         guard let table = AXHelpers.chatListTable(mainWindow) else {
             throw AutomationError.chatNotFound(chatName)
         }
@@ -48,7 +48,7 @@ public struct KakaoAutomator: Sendable {
         let row: AXUIElement
         if selfChat {
             guard let selfRow = AXHelpers.findSelfChatRow(table) else {
-                throw AutomationError.chatNotFound("self-chat (나와의 채팅)")
+                throw AutomationError.chatNotFound("self-chat")
             }
             row = selfRow
         } else {
@@ -58,7 +58,7 @@ public struct KakaoAutomator: Sendable {
             row = chatRow
         }
 
-        // 6. 행 선택 + Enter로 채팅창 열기
+        // 6. Select row and open chat window with Enter
         var opened = false
         if AXHelpers.selectRow(row, in: table) {
             Thread.sleep(forTimeInterval: 0.2)
@@ -75,7 +75,7 @@ public struct KakaoAutomator: Sendable {
             AXHelpers.doubleClickElement(row)
         }
 
-        // 7. 채팅창 대기
+        // 7. Wait for chat window
         var chatWindow: AXUIElement?
         let windowDeadline = Date().addingTimeInterval(5.0)
         while Date() < windowDeadline {
@@ -88,12 +88,12 @@ public struct KakaoAutomator: Sendable {
             throw AutomationError.inputFieldNotFound
         }
 
-        // 8. 입력 필드 찾기 (AXTable 없는 AXScrollArea 내의 AXTextArea)
+        // 8. Find input field (AXTextArea inside AXScrollArea without AXTable)
         guard let inputField = findInputField(in: chatWindow) else {
             throw AutomationError.inputFieldNotFound
         }
 
-        // 9. 메시지 입력
+        // 9. Enter message
         _ = AXHelpers.performAction(chatWindow, kAXRaiseAction as String)
         Thread.sleep(forTimeInterval: 0.3)
         AXHelpers.clickElement(inputField)
@@ -110,7 +110,7 @@ public struct KakaoAutomator: Sendable {
             AXHelpers.pressKey(keyCode: 36) // Return
         }
 
-        // 10. 채팅창 닫기
+        // 10. Close chat window
         Thread.sleep(forTimeInterval: 0.3)
         _ = AXHelpers.closeWindow(chatWindow)
     }

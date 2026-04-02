@@ -5,7 +5,7 @@ import KTalkCore
 struct KTalk: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ktalk",
-        abstract: "KakaoTalk CLI — 대화 조회, 메시지 전송, 실시간 스트리밍",
+        abstract: "KakaoTalk CLI — read chats, send messages, stream in real-time",
         version: "0.1.0",
         subcommands: [
             StatusCommand.self,

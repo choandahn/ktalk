@@ -81,7 +81,7 @@ public enum JSONRPCParseError: Error, Sendable {
 
 public enum JSONRPCProtocol {
 
-    /// Data를 JSON-RPC 2.0 요청으로 파싱합니다.
+    /// Parses Data as a JSON-RPC 2.0 request.
     public static func parseRequest(_ data: Data) throws -> JSONRPCRequest {
         guard let obj = try? JSONSerialization.jsonObject(with: data),
               let dict = obj as? [String: Any] else {
@@ -110,7 +110,7 @@ public enum JSONRPCProtocol {
         return JSONRPCRequest(jsonrpc: jsonrpc, method: method, params: params, id: id)
     }
 
-    /// JSON-RPC 2.0 응답을 Data로 직렬화합니다.
+    /// Serializes a JSON-RPC 2.0 response to Data.
     public static func serializeResponse(_ response: JSONRPCResponse) throws -> Data {
         var dict: [String: Any] = ["jsonrpc": "2.0"]
 
@@ -131,7 +131,7 @@ public enum JSONRPCProtocol {
         return try JSONSerialization.data(withJSONObject: dict)
     }
 
-    /// JSON-RPC 2.0 notification을 Data로 직렬화합니다 (id 없음, 서버→클라이언트).
+    /// Serializes a JSON-RPC 2.0 notification to Data (no id, server→client).
     public static func serializeNotification(_ notification: JSONRPCNotification) throws -> Data {
         var dict: [String: Any] = [
             "jsonrpc": "2.0",
@@ -143,7 +143,7 @@ public enum JSONRPCProtocol {
         return try JSONSerialization.data(withJSONObject: dict)
     }
 
-    /// 표준 에러 코드로 에러 응답 Data를 생성합니다.
+    /// Generates an error response Data using a standard error code.
     public static func errorResponse(code: RPCErrorCode, id: JSONRPCRequestID?) throws -> Data {
         let response = JSONRPCResponse(
             result: nil,

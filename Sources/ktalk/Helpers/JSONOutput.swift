@@ -1,6 +1,6 @@
 import Foundation
 
-/// CLI JSON 출력용 공유 인코더.
+/// Shared encoder for CLI JSON output.
 enum JSONOutput {
     private static let encoder: JSONEncoder = {
         let e = JSONEncoder()

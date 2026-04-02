@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import Foundation
 
-/// KakaoTalk 로그인 화면을 Accessibility API로 자동화합니다.
+/// Automates the KakaoTalk login screen using the Accessibility API.
 public enum LoginAutomator {
 
     public static func login(email: String, password: String) throws {
@@ -15,7 +15,7 @@ public enum LoginAutomator {
             throw LifecycleError.loginFailed("No login window found")
         }
 
-        // 로그인 창 탐지: title에 "log in" 또는 "로그인" 포함
+        // Detect login window: title contains "log in" or "로그인"
         let loginWindow = windows.first(where: {
             let title = AXHelpers.title($0) ?? ""
             return title.lowercased().contains("log in") || title == "로그인"
@@ -51,7 +51,7 @@ public enum LoginAutomator {
             throw LifecycleError.loginFailed("Could not find password field. The login UI may have changed.")
         }
 
-        // "로그인 유지" 체크박스 활성화
+        // Enable "Keep me logged in" checkbox
         if let keepLoggedIn = AXHelpers.findFirst(loginWindow, role: "AXCheckBox", text: "Keep me logged in") ??
            AXHelpers.findFirst(loginWindow, role: "AXCheckBox", text: "로그인 유지") {
             let checked = AXHelpers.intAttribute(keepLoggedIn, kAXValueAttribute as String) ?? 0
@@ -61,7 +61,7 @@ public enum LoginAutomator {
             }
         }
 
-        // 이메일 입력
+        // Enter email
         AXHelpers.clickElement(emailField)
         Thread.sleep(forTimeInterval: 0.1)
         AXHelpers.selectAll()
@@ -71,7 +71,7 @@ public enum LoginAutomator {
         }
         Thread.sleep(forTimeInterval: 0.2)
 
-        // 비밀번호 입력
+        // Enter password
         AXHelpers.clickElement(passwordField)
         Thread.sleep(forTimeInterval: 0.2)
         AXHelpers.selectAll()
@@ -81,14 +81,14 @@ public enum LoginAutomator {
         }
         Thread.sleep(forTimeInterval: 0.3)
 
-        // 로그인 버튼 클릭 또는 Enter
+        // Click login button or press Enter
         if let loginButton = findLoginButton(in: loginWindow) {
             _ = AXHelpers.performAction(loginButton, kAXPressAction as String)
         } else {
             AXHelpers.pressKey(keyCode: 36) // Return
         }
 
-        // 로그인 완료 폴링 (30초)
+        // Poll for login completion (30 seconds)
         let loginStart = Date()
         let deadline = Date().addingTimeInterval(30.0)
         while Date() < deadline {

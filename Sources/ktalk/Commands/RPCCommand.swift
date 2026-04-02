@@ -5,10 +5,10 @@ import KTalkCore
 struct RPCCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "rpc",
-        abstract: "JSON-RPC 2.0 서버 (stdin/stdout, JSON Lines)"
+        abstract: "JSON-RPC 2.0 server (stdin/stdout, JSON Lines)"
     )
 
-    @Option(name: .long, help: "데이터베이스 파일 경로 (자동 감지)")
+    @Option(name: .long, help: "Database file path (auto-detected)")
     var db: String?
 
     func run() throws {

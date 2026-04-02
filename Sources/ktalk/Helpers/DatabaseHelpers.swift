@@ -1,7 +1,7 @@
 import Foundation
 import KTalkCore
 
-/// 공유 데이터베이스 열기 헬퍼.
+/// Shared database open helper.
 func openDatabase(dbPath: String?, key: String?) throws -> DatabaseReader {
     let path: String
     let secureKey: String
@@ -9,13 +9,13 @@ func openDatabase(dbPath: String?, key: String?) throws -> DatabaseReader {
     if let dbPath {
         path = dbPath
         guard let k = key else {
-            throw KTalkError.databaseOpenFailed("--key 옵션이 필요합니다")
+            throw KTalkError.databaseOpenFailed("--key option is required")
         }
         secureKey = k
     } else {
         let uuid = try DeviceInfo.platformUUID()
 
-        // 표준 경로: userId → dbName 파생
+        // Standard path: derive dbName from userId
         if let uid = try? DeviceInfo.userId() {
             let dbName = KeyDerivation.databaseName(userId: uid, uuid: uuid)
             let candidates = [
@@ -30,7 +30,7 @@ func openDatabase(dbPath: String?, key: String?) throws -> DatabaseReader {
             }
         }
 
-        // 폴백: DB 파일 탐색 후 후보 userId로 키 시도
+        // Fallback: discover DB file and try candidate userId keys
         guard let discoveredPath = DeviceInfo.discoverDatabaseFile() else {
             let uid = try DeviceInfo.userId()
             let dbName = KeyDerivation.databaseName(userId: uid, uuid: try DeviceInfo.platformUUID())
@@ -56,7 +56,7 @@ func openDatabase(dbPath: String?, key: String?) throws -> DatabaseReader {
             }
 
             guard let k = foundKey else {
-                throw KTalkError.databaseOpenFailed("올바른 암호화 키를 찾을 수 없습니다")
+                throw KTalkError.databaseOpenFailed("Could not find a valid encryption key")
             }
             path = discoveredPath
             secureKey = k
@@ -68,7 +68,7 @@ func openDatabase(dbPath: String?, key: String?) throws -> DatabaseReader {
     return reader
 }
 
-/// Date를 사람이 읽기 쉬운 형식으로 포맷합니다.
+/// Formats a Date into a human-readable string.
 func formatDate(_ date: Date) -> String {
     let formatter = DateFormatter()
     let calendar = Calendar.current

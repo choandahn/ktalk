@@ -5,31 +5,31 @@ import KTalkCore
 struct HistoryCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "history",
-        abstract: "특정 채팅방의 메시지 이력 조회"
+        abstract: "Show message history for a chat room"
     )
 
-    @Option(name: .long, help: "채팅방 ID (필수)")
+    @Option(name: .long, help: "Chat room ID (required)")
     var chatId: Int64
 
-    @Option(name: .long, help: "최대 조회 수 (기본: 50)")
+    @Option(name: .long, help: "Maximum results (default: 50)")
     var limit: Int = 50
 
-    @Option(name: .long, help: "이 기간 이후의 메시지만 (예: 1h, 24h, 7d)")
+    @Option(name: .long, help: "Only messages after this duration (e.g. 1h, 24h, 7d)")
     var since: String?
 
-    @Option(name: .long, help: "시작 날짜 필터 (ISO8601, 예: 2025-01-15T10:30:00Z)")
+    @Option(name: .long, help: "Start date filter (ISO8601, e.g. 2025-01-15T10:30:00Z)")
     var start: String?
 
-    @Option(name: .long, help: "종료 날짜 필터 (ISO8601, 예: 2025-01-15T23:59:59Z)")
+    @Option(name: .long, help: "End date filter (ISO8601, e.g. 2025-01-15T23:59:59Z)")
     var end: String?
 
-    @Flag(name: .long, help: "JSON 형식으로 출력")
+    @Flag(name: .long, help: "Output as JSON")
     var json = false
 
-    @Option(name: .long, help: "데이터베이스 파일 경로 (자동 감지)")
+    @Option(name: .long, help: "Database file path (auto-detected)")
     var db: String?
 
-    @Option(name: .long, help: "데이터베이스 암호화 키 (자동 유도)")
+    @Option(name: .long, help: "Database encryption key (auto-derived)")
     var key: String?
 
     func run() throws {
@@ -69,7 +69,7 @@ struct HistoryCommand: ParsableCommand {
             JSONOutput.printJSONArray(messages)
         } else {
             if messages.isEmpty {
-                print("메시지가 없습니다.")
+                print("No messages found.")
                 return
             }
             for msg in messages.reversed() {

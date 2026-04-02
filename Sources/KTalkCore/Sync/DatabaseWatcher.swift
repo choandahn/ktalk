@@ -1,7 +1,7 @@
 import Foundation
 
-/// KakaoTalk 데이터베이스를 폴링하여 새 메시지를 감시합니다.
-/// logId 기반 high-water mark로 중복 없이 새 메시지만 전달합니다.
+/// Polls the KakaoTalk database to watch for new messages.
+/// Delivers only new messages without duplicates using a logId-based high-water mark.
 public final class DatabaseWatcher: @unchecked Sendable {
     private let databasePath: String
     private let key: String?
@@ -21,14 +21,14 @@ public final class DatabaseWatcher: @unchecked Sendable {
         self.lastLogId = startFromLogId ?? 0
     }
 
-    /// 새 메시지 감시를 시작합니다. stop() 호출 전까지 블로킹합니다.
+    /// Starts watching for new messages. Blocks until stop() is called.
     public func watch(
         onMessages: @escaping ([SyncMessage]) -> Void,
         onError: @escaping (Error) -> Void
     ) {
         running = true
 
-        // 시작 logId가 없으면 현재 최대값으로 초기화
+        // If no starting logId, initialize to the current maximum
         if lastLogId == 0 {
             do {
                 lastLogId = try fetchMaxLogId()
@@ -62,7 +62,7 @@ public final class DatabaseWatcher: @unchecked Sendable {
 
     private func openReader() throws -> DatabaseReader {
         guard let key else {
-            throw KTalkError.databaseOpenFailed("암호화 키가 필요합니다")
+            throw KTalkError.databaseOpenFailed("Encryption key required")
         }
         let reader = DatabaseReader(databasePath: databasePath)
         try reader.open(key: key)
@@ -99,7 +99,7 @@ public final class DatabaseWatcher: @unchecked Sendable {
     }
 }
 
-/// 감시자가 전달하는 메시지 이벤트 (JSON 직렬화용).
+/// Message event delivered by the watcher (for JSON serialization).
 public struct SyncMessage: Sendable, Encodable {
     public let type: String
     public let logId: Int64

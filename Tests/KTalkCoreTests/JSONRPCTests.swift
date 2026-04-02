@@ -8,7 +8,7 @@ struct JSONRPCTests {
     @Suite("Request Parsing")
     struct RequestParsingTests {
 
-        @Test("유효한 요청 파싱 (params + int id)")
+        @Test("Parse valid request (params + int id)")
         func parseValidRequest() throws {
             let json = #"{"jsonrpc":"2.0","method":"chats.list","params":{"limit":10},"id":1}"#
             let request = try JSONRPCProtocol.parseRequest(Data(json.utf8))
@@ -19,7 +19,7 @@ struct JSONRPCTests {
             #expect(limit == 10)
         }
 
-        @Test("params 없는 요청 파싱")
+        @Test("Parse request without params")
         func parseRequestWithoutParams() throws {
             let json = #"{"jsonrpc":"2.0","method":"watch.unsubscribe","id":2}"#
             let request = try JSONRPCProtocol.parseRequest(Data(json.utf8))
@@ -28,21 +28,21 @@ struct JSONRPCTests {
             #expect(request.id == .int(2))
         }
 
-        @Test("string id 요청 파싱")
+        @Test("Parse request with string id")
         func parseRequestWithStringId() throws {
             let json = #"{"jsonrpc":"2.0","method":"chats.list","id":"abc-123"}"#
             let request = try JSONRPCProtocol.parseRequest(Data(json.utf8))
             #expect(request.id == .string("abc-123"))
         }
 
-        @Test("notification 요청 파싱 (id 없음)")
+        @Test("Parse notification request (no id)")
         func parseRequestWithoutId() throws {
             let json = #"{"jsonrpc":"2.0","method":"watch.unsubscribe"}"#
             let request = try JSONRPCProtocol.parseRequest(Data(json.utf8))
             #expect(request.id == nil)
         }
 
-        @Test("잘못된 jsonrpc 버전 거부")
+        @Test("Reject invalid jsonrpc version")
         func rejectInvalidVersion() {
             let json = #"{"jsonrpc":"1.0","method":"chats.list","id":1}"#
             #expect(throws: (any Error).self) {
@@ -50,7 +50,7 @@ struct JSONRPCTests {
             }
         }
 
-        @Test("method 누락 시 거부")
+        @Test("Reject missing method")
         func rejectMissingMethod() {
             let json = #"{"jsonrpc":"2.0","id":1}"#
             #expect(throws: (any Error).self) {
@@ -58,7 +58,7 @@ struct JSONRPCTests {
             }
         }
 
-        @Test("잘못된 JSON 거부")
+        @Test("Reject invalid JSON")
         func rejectInvalidJSON() {
             #expect(throws: (any Error).self) {
                 try JSONRPCProtocol.parseRequest(Data("not json".utf8))
@@ -69,7 +69,7 @@ struct JSONRPCTests {
     @Suite("Response Serialization")
     struct ResponseSerializationTests {
 
-        @Test("성공 응답 직렬화")
+        @Test("Serialize success response")
         func serializeSuccessResponse() throws {
             let response = JSONRPCResponse(
                 result: ["key": "value"],
@@ -85,7 +85,7 @@ struct JSONRPCTests {
             #expect(obj["id"] as? Int == 1)
         }
 
-        @Test("에러 응답 직렬화")
+        @Test("Serialize error response")
         func serializeErrorResponse() throws {
             let response = JSONRPCResponse(
                 result: nil,
@@ -101,7 +101,7 @@ struct JSONRPCTests {
             #expect(error?["message"] as? String == "Method not found")
         }
 
-        @Test("string id 응답 직렬화")
+        @Test("Serialize response with string id")
         func serializeStringIdResponse() throws {
             let response = JSONRPCResponse(
                 result: ["ok": true],
@@ -113,7 +113,7 @@ struct JSONRPCTests {
             #expect(obj["id"] as? String == "req-xyz")
         }
 
-        @Test("notification 직렬화 (id 없음)")
+        @Test("Serialize notification (no id)")
         func serializeNotification() throws {
             let notification = JSONRPCNotification(method: "watch.message", params: ["text": "hello"])
             let data = try JSONRPCProtocol.serializeNotification(notification)
@@ -129,7 +129,7 @@ struct JSONRPCTests {
     @Suite("Error Codes")
     struct ErrorCodeTests {
 
-        @Test("표준 에러 코드값")
+        @Test("Standard error code values")
         func standardErrorCodes() {
             #expect(RPCErrorCode.parseError.rawValue == -32700)
             #expect(RPCErrorCode.invalidRequest.rawValue == -32600)
@@ -138,7 +138,7 @@ struct JSONRPCTests {
             #expect(RPCErrorCode.internalError.rawValue == -32603)
         }
 
-        @Test("errorResponse 헬퍼 생성")
+        @Test("Create errorResponse helper")
         func errorResponseHelper() throws {
             let data = try JSONRPCProtocol.errorResponse(code: .invalidRequest, id: .int(5))
             let obj = try JSONSerialization.jsonObject(with: data) as! [String: Any]

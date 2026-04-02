@@ -1,7 +1,7 @@
 import Foundation
 
-/// JSON-RPC 2.0 메서드 라우터 및 실행기.
-/// handleRequest()에서 요청을 파싱하고 적절한 메서드로 라우팅합니다.
+/// JSON-RPC 2.0 method router and executor.
+/// Parses requests and routes them to the appropriate method handler in handleRequest().
 public final class RPCHandler: @unchecked Sendable {
     private let databasePath: String?
     private let notifyCallback: @Sendable (Data) -> Void
@@ -9,14 +9,14 @@ public final class RPCHandler: @unchecked Sendable {
     private var watchThread: Thread?
 
     /// - Parameters:
-    ///   - databasePath: DB 파일 경로 (nil이면 자동 감지)
-    ///   - notifyCallback: watch.subscribe 알림을 출력할 콜백 (JSON Lines)
+    ///   - databasePath: Path to the DB file (nil for auto-detection)
+    ///   - notifyCallback: Callback for outputting watch.subscribe notifications (JSON Lines)
     public init(databasePath: String?, notifyCallback: @escaping @Sendable (Data) -> Void) {
         self.databasePath = databasePath
         self.notifyCallback = notifyCallback
     }
 
-    /// JSON-RPC 요청 Data를 처리하고 응답 Data를 반환합니다.
+    /// Handles a JSON-RPC request Data and returns a response Data.
     public func handleRequest(_ data: Data) -> Data {
         do {
             let req = try JSONRPCProtocol.parseRequest(data)
@@ -104,7 +104,7 @@ public final class RPCHandler: @unchecked Sendable {
     }
 
     private func handleWatchSubscribe(_ req: JSONRPCRequest) throws -> Data {
-        // 이미 감시 중이면 중지 후 재시작
+        // If already watching, stop and restart
         stopWatcher()
 
         let filterChatId = req.params?["chat_id"] as? Int64
@@ -164,7 +164,7 @@ public final class RPCHandler: @unchecked Sendable {
         if let key {
             try reader.open(key: key)
         } else {
-            throw KTalkError.databaseOpenFailed("암호화 키를 찾을 수 없습니다")
+            throw KTalkError.databaseOpenFailed("Encryption key not found")
         }
         return reader
     }

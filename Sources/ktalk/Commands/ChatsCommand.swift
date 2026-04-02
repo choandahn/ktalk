@@ -5,19 +5,19 @@ import KTalkCore
 struct ChatsCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "chats",
-        abstract: "채팅방 목록 조회"
+        abstract: "List chat rooms"
     )
 
-    @Option(name: .long, help: "최대 조회 수 (기본: 20)")
+    @Option(name: .long, help: "Maximum results (default: 20)")
     var limit: Int = 20
 
-    @Flag(name: .long, help: "JSON 형식으로 출력")
+    @Flag(name: .long, help: "Output as JSON")
     var json = false
 
-    @Option(name: .long, help: "데이터베이스 파일 경로 (자동 감지)")
+    @Option(name: .long, help: "Database file path (auto-detected)")
     var db: String?
 
-    @Option(name: .long, help: "데이터베이스 암호화 키 (자동 유도)")
+    @Option(name: .long, help: "Database encryption key (auto-derived)")
     var key: String?
 
     func run() throws {
@@ -30,7 +30,7 @@ struct ChatsCommand: ParsableCommand {
             JSONOutput.printJSONArray(chats)
         } else {
             if chats.isEmpty {
-                print("채팅방이 없습니다.")
+                print("No chats found.")
                 return
             }
             for chat in chats {

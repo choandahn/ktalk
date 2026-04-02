@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import Foundation
 
-/// KakaoTalk 앱의 관찰 상태
+/// Observed state of the KakaoTalk app
 public enum AppState: String, Sendable {
     case notRunning
     case launching
@@ -12,7 +12,7 @@ public enum AppState: String, Sendable {
     case unknown
 }
 
-/// KakaoTalk.app 라이프사이클 관리: 실행, 상태 감지, 준비 확인
+/// Manages the KakaoTalk.app lifecycle: launching, state detection, and readiness checking
 public enum AppLifecycle {
 
     public static let bundleId = KakaoAutomator.bundleId
@@ -240,7 +240,7 @@ public enum AppLifecycle {
         try LoginAutomator.login(email: email, password: password)
     }
 
-    /// AppleScript으로 상태 표시줄 메뉴에서 KakaoTalk 창을 엽니다.
+    /// Opens the KakaoTalk window from the status bar menu via AppleScript.
     private static func showMainWindow(_ axApp: AXUIElement) {
         let script = """
         tell application "System Events"

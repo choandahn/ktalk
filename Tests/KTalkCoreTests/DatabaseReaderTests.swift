@@ -5,13 +5,13 @@ import Testing
 @Suite("DatabaseReader")
 struct DatabaseReaderTests {
 
-    @Test("databasePath로 초기화할 수 있다")
+    @Test("Can initialize with databasePath")
     func initializationWithPath() {
         let reader = DatabaseReader(databasePath: "/tmp/test.db")
         #expect(reader.databasePath == "/tmp/test.db")
     }
 
-    @Test("존재하지 않는 파일로 open하면 에러를 던진다")
+    @Test("open throws error for nonexistent file")
     func openThrowsForNonexistentFile() {
         let reader = DatabaseReader(databasePath: "/nonexistent/path/test.db")
         #expect(throws: KTalkError.self) {
@@ -19,7 +19,7 @@ struct DatabaseReaderTests {
         }
     }
 
-    @Test("kakaoDate는 Unix 타임스탬프(초)를 Date로 변환한다")
+    @Test("kakaoDate converts Unix timestamp (seconds) to Date")
     func kakaoDateUnixTimestamp() {
         // Unix epoch
         let epoch = DatabaseReader.kakaoDate(0)
@@ -30,25 +30,25 @@ struct DatabaseReaderTests {
         #expect(known.timeIntervalSince1970 == 1_704_067_200.0)
     }
 
-    @Test("kakaoDate는 CoreData 오프셋(978307200)을 사용하지 않는다")
+    @Test("kakaoDate does not use CoreData offset (978307200)")
     func kakaoDateNotCoreDataOffset() {
-        // CoreData 기준점: 2001-01-01 = 978307200초
-        // KakaoTalk은 CoreData 오프셋 없이 순수 Unix timestamp 사용
+        // CoreData epoch: 2001-01-01 = 978307200 seconds
+        // KakaoTalk uses pure Unix timestamps without CoreData offset
         let date = DatabaseReader.kakaoDate(1_000_000_000)
         #expect(date.timeIntervalSince1970 == 1_000_000_000.0)
         #expect(date.timeIntervalSince1970 != 1_000_000_000.0 + 978_307_200.0)
     }
 
-    @Test("canAccessRealDB는 Bool을 반환한다")
+    @Test("canAccessRealDB returns Bool")
     func canAccessRealDBReturnsBool() {
-        // 크래시 없이 Bool 반환 확인
+        // Verify it returns Bool without crashing
         let result = DatabaseReader.canAccessRealDB()
         let _ = result  // just verify it executes
     }
 
-    // MARK: - 통합 테스트 (실제 KakaoTalk DB가 있을 때만 실행)
+    // MARK: - Integration Tests (run only when real KakaoTalk DB exists)
 
-    @Test("chats는 Chat 배열을 반환한다 (통합)")
+    @Test("chats returns Chat array (integration)")
     func chatsIntegration() throws {
         guard DatabaseReader.canAccessRealDB() else { return }
         guard let dbPath = DeviceInfo.discoverDatabaseFile() else { return }
@@ -57,13 +57,13 @@ struct DatabaseReaderTests {
         let key = KeyDerivation.secureKey(userId: userId, uuid: uuid)
 
         let reader = DatabaseReader(databasePath: dbPath)
-        // key가 맞지 않으면 스킵 (userId 추출 전략이 실제 암호화 키와 다를 수 있음)
+        // Skip if key doesn't match (userId extraction strategy may differ from actual encryption key)
         do { try reader.open(key: key) } catch { return }
         let chats = try reader.chats(limit: 10)
         #expect(chats.count >= 0)
     }
 
-    @Test("myUserId는 Int64를 반환한다 (통합)")
+    @Test("myUserId returns Int64 (integration)")
     func myUserIdIntegration() throws {
         guard DatabaseReader.canAccessRealDB() else { return }
         guard let dbPath = DeviceInfo.discoverDatabaseFile() else { return }
@@ -77,7 +77,7 @@ struct DatabaseReaderTests {
         #expect(myId >= 0)
     }
 
-    @Test("messages는 Message 배열을 반환한다 (통합)")
+    @Test("messages returns Message array (integration)")
     func messagesIntegration() throws {
         guard DatabaseReader.canAccessRealDB() else { return }
         guard let dbPath = DeviceInfo.discoverDatabaseFile() else { return }
@@ -93,7 +93,7 @@ struct DatabaseReaderTests {
         #expect(messages.count >= 0)
     }
 
-    @Test("search는 Message 배열을 반환한다 (통합)")
+    @Test("search returns Message array (integration)")
     func searchIntegration() throws {
         guard DatabaseReader.canAccessRealDB() else { return }
         guard let dbPath = DeviceInfo.discoverDatabaseFile() else { return }
@@ -107,7 +107,7 @@ struct DatabaseReaderTests {
         #expect(results.count >= 0)
     }
 
-    @Test("maxLogId는 Int64를 반환한다 (통합)")
+    @Test("maxLogId returns Int64 (integration)")
     func maxLogIdIntegration() throws {
         guard DatabaseReader.canAccessRealDB() else { return }
         guard let dbPath = DeviceInfo.discoverDatabaseFile() else { return }

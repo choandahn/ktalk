@@ -1,7 +1,7 @@
 import AppKit
 import ApplicationServices
 
-/// macOS Accessibility API 저수준 헬퍼
+/// Low-level helpers for the macOS Accessibility API
 public enum AXHelpers {
 
     // MARK: - App Element

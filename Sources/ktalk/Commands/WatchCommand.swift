@@ -5,31 +5,31 @@ import KTalkCore
 struct WatchCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "watch",
-        abstract: "새 메시지 실시간 감시"
+        abstract: "Stream new messages in real-time"
     )
 
-    @Option(name: .long, help: "감시할 채팅방 ID (생략 시 전체)")
+    @Option(name: .long, help: "Chat room ID to watch (omit for all)")
     var chatId: Int64?
 
-    @Option(name: .long, help: "이 logId 이후의 메시지만 수신")
+    @Option(name: .long, help: "Only receive messages after this logId")
     var sinceLogId: Int64?
 
-    @Option(name: .long, help: "폴링 간격 초 (기본: 2)")
+    @Option(name: .long, help: "Polling interval in seconds (default: 2)")
     var interval: Double = 2.0
 
-    @Option(name: .long, help: "시작 날짜 필터 (ISO8601, 예: 2025-01-15T10:30:00Z)")
+    @Option(name: .long, help: "Start date filter (ISO8601, e.g. 2025-01-15T10:30:00Z)")
     var start: String?
 
-    @Option(name: .long, help: "종료 날짜 필터 (ISO8601, 예: 2025-01-15T23:59:59Z)")
+    @Option(name: .long, help: "End date filter (ISO8601, e.g. 2025-01-15T23:59:59Z)")
     var end: String?
 
-    @Flag(name: .long, help: "NDJSON 형식으로 출력")
+    @Flag(name: .long, help: "Output as NDJSON")
     var json = false
 
-    @Option(name: .long, help: "데이터베이스 파일 경로 (자동 감지)")
+    @Option(name: .long, help: "Database file path (auto-detected)")
     var db: String?
 
-    @Option(name: .long, help: "데이터베이스 암호화 키 (자동 유도)")
+    @Option(name: .long, help: "Database encryption key (auto-derived)")
     var key: String?
 
     func run() throws {
@@ -40,11 +40,11 @@ struct WatchCommand: ParsableCommand {
         let endDate: Date? = end.flatMap { iso8601.date(from: $0) }
 
         signal(SIGINT) { _ in
-            fputs("\n감시를 중단합니다...\n", stderr)
+            fputs("\nStopping watch...\n", stderr)
             Darwin.exit(0)
         }
 
-        fputs("새 메시지 감시 중 (폴링 간격: \(interval)s)...\n", stderr)
+        fputs("Watching for new messages (poll interval: \(interval)s)...\n", stderr)
 
         let watcher = DatabaseWatcher(
             databasePath: path,
@@ -59,9 +59,9 @@ struct WatchCommand: ParsableCommand {
         watcher.watch(
             onMessages: { messages in
                 for msg in messages {
-                    // chatId 필터
+                    // chatId filter
                     if let filterChatId = chatId, msg.chatId != filterChatId { continue }
-                    // 날짜 필터 (timestamp 문자열을 Date로 파싱)
+                    // date filter (parse timestamp string to Date)
                     if startDate != nil || endDate != nil {
                         let msgDate = iso8601.date(from: msg.timestamp) ?? .distantPast
                         if let startDate, msgDate < startDate { continue }
@@ -87,7 +87,7 @@ struct WatchCommand: ParsableCommand {
     }
 }
 
-/// 데이터베이스 경로와 키를 반환합니다 (데이터베이스를 열지 않음).
+/// Returns the database path and key (does not open the database).
 func resolveDatabasePath(dbPath: String?, key: String?) throws -> (path: String, key: String?) {
     if let dbPath {
         return (dbPath, key)

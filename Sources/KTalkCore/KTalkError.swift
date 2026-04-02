@@ -1,7 +1,7 @@
 import Foundation
 
 public enum KTalkError: Error {
-    // 기존 케이스
+    // Existing cases
     case appNotInstalled
     case uuidNotFound
     case plistNotFound(String)
@@ -12,7 +12,7 @@ public enum KTalkError: Error {
     case sqlError(String)
     case kakaoTalkNotInstalled
 
-    // 새 케이스
+    // New cases
     case permissionDenied
     case invalidISODate(String)
     case invalidChatTarget(String)
@@ -25,39 +25,39 @@ extension KTalkError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .appNotInstalled, .kakaoTalkNotInstalled:
-            return "KakaoTalk.app이 설치되어 있지 않습니다"
+            return "KakaoTalk.app is not installed"
         case .uuidNotFound:
-            return "ioreg에서 IOPlatformUUID를 읽을 수 없습니다"
+            return "Could not read IOPlatformUUID from ioreg"
         case .plistNotFound(let path):
-            return "KakaoTalk preferences를 찾을 수 없습니다: \(path)"
+            return "KakaoTalk preferences not found: \(path)"
         case .plistParseError:
-            return "KakaoTalk preferences plist 파싱에 실패했습니다"
+            return "Failed to parse KakaoTalk preferences plist"
         case .userIdNotFound(let keys):
-            return "plist에서 사용자 ID를 찾을 수 없습니다. 사용 가능한 키: \(keys.joined(separator: ", "))"
+            return "Could not find user ID in plist. Available keys: \(keys.joined(separator: ", "))"
         case .databaseNotFound(let path):
-            return "KakaoTalk 데이터베이스를 찾을 수 없습니다: \(path)"
+            return "KakaoTalk database not found: \(path)"
         case .databaseOpenFailed(let msg):
-            return "데이터베이스 열기 실패: \(msg)"
+            return "Failed to open database: \(msg)"
         case .sqlError(let msg):
-            return "SQL 오류: \(msg)"
+            return "SQL error: \(msg)"
         case .permissionDenied:
-            return "chat.db에 접근할 수 없습니다. 시스템 설정 > 개인정보 보호 > Full Disk Access에서 터미널을 허용해 주세요."
+            return "Cannot access chat.db. Enable Full Disk Access for Terminal in System Settings > Privacy & Security."
         case .invalidISODate(let input):
-            return "잘못된 날짜 형식입니다: '\(input)'. ISO 8601 형식을 사용하세요 (예: 2025-01-15T10:30:00Z)"
+            return "Invalid date format: '\(input)'. Use ISO 8601 format (e.g. 2025-01-15T10:30:00Z)"
         case .invalidChatTarget(let target):
-            return "유효하지 않은 대화 대상입니다: '\(target)'. 올바른 핸들 또는 chat ID를 입력하세요."
+            return "Invalid chat target: '\(target)'. Provide a valid handle or chat ID."
         case .chatNotFound(let id):
-            return "chat ID \(id)를 찾을 수 없습니다."
+            return "Chat ID \(id) not found."
         case .appleScriptFailure(let msg):
-            return "AppleScript 실행에 실패했습니다. Automation 권한을 확인해 주세요: \(msg)"
+            return "AppleScript execution failed. Check Automation permissions: \(msg)"
         case .databaseError(let msg):
-            return "데이터베이스 오류: \(msg)"
+            return "Database error: \(msg)"
         }
     }
 }
 
 extension KTalkError: CustomStringConvertible {
     public var description: String {
-        errorDescription ?? "알 수 없는 오류"
+        errorDescription ?? "Unknown error"
     }
 }

@@ -5,59 +5,59 @@ import Testing
 @Suite("DeviceInfo")
 struct DeviceInfoTests {
 
-    @Test("platformUUID는 유효한 UUID 형식을 반환한다")
+    @Test("platformUUID returns valid UUID format")
     func platformUUIDFormat() throws {
         let uuid = try DeviceInfo.platformUUID()
-        // 형식: 8-4-4-4-12 대문자 16진수
+        // Format: 8-4-4-4-12 uppercase hex digits
         let pattern = #"^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$"#
         let regex = try NSRegularExpression(pattern: pattern)
         let range = NSRange(uuid.startIndex..., in: uuid)
-        #expect(regex.firstMatch(in: uuid, range: range) != nil, "UUID '\(uuid)'가 예상 형식과 다릅니다")
+        #expect(regex.firstMatch(in: uuid, range: range) != nil, "UUID '\(uuid)' does not match expected format")
     }
 
-    @Test("containerPath는 올바른 번들 ID를 포함한다")
+    @Test("containerPath contains correct bundle ID")
     func containerPathContainsCorrectBundle() {
         let path = DeviceInfo.containerPath
         #expect(path.contains("com.kakao.KakaoTalkMac"))
         #expect(path.contains("Application Support"))
     }
 
-    @Test("preferencesPath는 Preferences 디렉터리를 가리킨다")
+    @Test("preferencesPath points to Preferences directory")
     func preferencesPathContainsPreferences() {
         let path = DeviceInfo.preferencesPath
         #expect(path.contains("com.kakao.KakaoTalkMac"))
         #expect(path.contains("Preferences"))
     }
 
-    @Test("discoverDatabaseFile은 nil 또는 78자 hex 파일 경로를 반환한다")
+    @Test("discoverDatabaseFile returns nil or 78-char hex file path")
     func discoverDatabaseFileReturnsValidPathOrNil() {
         guard let path = DeviceInfo.discoverDatabaseFile() else {
-            // KakaoTalk 미설치 환경에서는 nil 허용
+            // nil is allowed when KakaoTalk is not installed
             return
         }
         let filename = URL(fileURLWithPath: path).lastPathComponent
-        #expect(filename.count == 78, "파일명은 78자여야 합니다. 실제: \(filename.count)자")
-        #expect(filename.allSatisfy { $0.isHexDigit }, "파일명 '\(filename)'은 16진수로만 이루어져야 합니다")
+        #expect(filename.count == 78, "Filename must be 78 chars, actual: \(filename.count)")
+        #expect(filename.allSatisfy { $0.isHexDigit }, "Filename '\(filename)' must consist of hex digits only")
     }
 
-    @Test("countDatabaseFiles는 음수가 아닌 값을 반환한다")
+    @Test("countDatabaseFiles returns non-negative value")
     func countDatabaseFilesNonNegative() {
         #expect(DeviceInfo.countDatabaseFiles() >= 0)
     }
 
-    @Test("candidateUserIds는 양수 정수 배열을 반환한다")
+    @Test("candidateUserIds returns array of positive integers")
     func candidateUserIdsArePositive() {
         for id in DeviceInfo.candidateUserIds() {
-            #expect(id > 0, "userId는 양수여야 합니다. 실제: \(id)")
+            #expect(id > 0, "userId must be positive, actual: \(id)")
         }
     }
 
-    // MARK: - 통합 테스트 (KakaoTalk 설치 환경에서만 실행)
+    // MARK: - Integration Tests (run only when KakaoTalk is installed)
 
-    @Test("userId는 양수 정수를 반환한다 (통합)")
+    @Test("userId returns positive integer (integration)")
     func userIdReturnsPositiveInt() throws {
         guard DeviceInfo.discoverDatabaseFile() != nil else { return }
         let id = try DeviceInfo.userId()
-        #expect(id > 0, "userId는 양수여야 합니다. 실제: \(id)")
+        #expect(id > 0, "userId must be positive, actual: \(id)")
     }
 }

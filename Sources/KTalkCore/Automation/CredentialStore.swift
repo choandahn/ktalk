@@ -1,6 +1,6 @@
 import Foundation
 
-/// KakaoTalk 로그인 자격증명을 macOS Keychain에 저장/조회합니다.
+/// Stores and retrieves KakaoTalk login credentials in the macOS Keychain.
 public struct CredentialStore: Sendable {
 
     static let service = "com.ktalk.credentials"

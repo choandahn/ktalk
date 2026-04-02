@@ -64,13 +64,13 @@ ktalk history --chat-id 285808228519222 --limit 10
 ktalk history --chat-id 285808228519222 --since 7d --json
 
 # search messages
-ktalk search "안녕" --limit 5
+ktalk search "hello" --limit 5
 
 # live stream all new messages as JSON
 ktalk watch --json
 
 # send a message
-ktalk send --to "홍길동" --text "안녕하세요"
+ktalk send --to "John" --text "Hello there"
 
 # raw SQL query
 ktalk query "SELECT chatId, chatName FROM NTChatRoom LIMIT 5"
@@ -84,7 +84,7 @@ ktalk query "SELECT chatId, chatName FROM NTChatRoom LIMIT 5"
 `ktalk watch --json` emits one JSON object per line (NDJSON) as new messages arrive.
 
 ## Permissions troubleshooting
-If you see "데이터베이스 열기 실패" or empty output:
+If you see "database open failed" or empty output:
 1. Grant **Full Disk Access**: System Settings → Privacy & Security → Full Disk Access → add your terminal.
 2. Ensure KakaoTalk is installed and signed in.
 3. For sending, grant **Accessibility**: System Settings → Privacy & Security → Accessibility → add your terminal.

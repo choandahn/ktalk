@@ -5,13 +5,13 @@ import KTalkCore
 struct SchemaCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "schema",
-        abstract: "DB 스키마 출력 (CREATE TABLE 문)"
+        abstract: "Print DB schema (CREATE TABLE statements)"
     )
 
-    @Option(name: .long, help: "데이터베이스 파일 경로")
+    @Option(name: .long, help: "Database file path")
     var db: String?
 
-    @Option(name: .long, help: "데이터베이스 암호화 키")
+    @Option(name: .long, help: "Database encryption key")
     var key: String?
 
     func run() throws {
@@ -20,7 +20,7 @@ struct SchemaCommand: ParsableCommand {
 
         let tables = try reader.schema()
         if tables.isEmpty {
-            print("테이블을 찾을 수 없습니다 (데이터베이스가 암호화되었을 수 있습니다).")
+            print("No tables found (database may be encrypted).")
             return
         }
 

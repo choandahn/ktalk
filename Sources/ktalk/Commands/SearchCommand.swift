@@ -5,22 +5,22 @@ import KTalkCore
 struct SearchCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "search",
-        abstract: "메시지 검색"
+        abstract: "Search messages"
     )
 
-    @Argument(help: "검색어")
+    @Argument(help: "Search query")
     var query: String
 
-    @Option(name: .long, help: "최대 결과 수 (기본: 20)")
+    @Option(name: .long, help: "Maximum results (default: 20)")
     var limit: Int = 20
 
-    @Flag(name: .long, help: "JSON Lines 형식으로 출력")
+    @Flag(name: .long, help: "Output as JSON Lines")
     var json = false
 
-    @Option(name: .long, help: "데이터베이스 파일 경로 (자동 감지)")
+    @Option(name: .long, help: "Database file path (auto-detected)")
     var db: String?
 
-    @Option(name: .long, help: "데이터베이스 암호화 키 (자동 유도)")
+    @Option(name: .long, help: "Database encryption key (auto-derived)")
     var key: String?
 
     func run() throws {
@@ -48,13 +48,13 @@ struct SearchCommand: ParsableCommand {
             }
         } else {
             if results.isEmpty {
-                print("'\(query)'에 해당하는 메시지가 없습니다.")
+                print("No messages found for '\(query)'.")
                 return
             }
-            print("총 \(results.count)개 메시지:")
+            print("\(results.count) message(s):")
             print()
             for msg in results {
-                let sender = msg.isFromMe ? "나" : (msg.senderName ?? "알 수 없음")
+                let sender = msg.isFromMe ? "me" : (msg.senderName ?? "unknown")
                 let time = formatDate(msg.createdAt)
                 let text = msg.text ?? ""
                 print("[\(time)] \(sender) (\(msg.chatId)): \(text)")

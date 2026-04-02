@@ -2,10 +2,10 @@ import CommonCrypto
 import CSQLCipher
 import Foundation
 
-/// 로컬 시스템에서 기기 UUID와 KakaoTalk 사용자 ID를 추출합니다.
+/// Extracts the device UUID and KakaoTalk user ID from the local system.
 public enum DeviceInfo {
 
-    /// IORegistry에서 IOPlatformUUID를 가져옵니다.
+    /// Retrieves the IOPlatformUUID from IORegistry.
     public static func platformUUID() throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/ioreg")
@@ -27,13 +27,13 @@ public enum DeviceInfo {
         return String(output[uuidRange])
     }
 
-    /// KakaoTalk 컨테이너 데이터 디렉터리 경로.
+    /// Path to the KakaoTalk container data directory.
     public static var containerPath: String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return "\(home)/Library/Containers/com.kakao.KakaoTalkMac/Data/Library/Application Support/com.kakao.KakaoTalkMac"
     }
 
-    /// 컨테이너 preferences plist 경로.
+    /// Path to the container preferences plist.
     public static var preferencesPath: String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let prefDir = "\(home)/Library/Containers/com.kakao.KakaoTalkMac/Data/Library/Preferences"
@@ -48,16 +48,16 @@ public enum DeviceInfo {
         return "\(prefDir)/com.kakao.KakaoTalkMac.plist"
     }
 
-    /// KakaoTalk preferences plist에서 사용자 ID를 추출합니다.
+    /// Extracts the user ID from the KakaoTalk preferences plist.
     ///
-    /// 다음 전략을 순서대로 시도합니다:
-    /// 0. Cache.db의 talk-user-id HTTP 헤더 (가장 신뢰성 높음)
-    /// 1. FSChatWindowTransparency 공통 접미사 (레거시)
-    /// 2. 직접 키 조회 (userId, user_id 등)
-    /// 3. plist 수정 키의 SHA-512 해시 역산
-    /// 4. FSChatWindowFrame_ 공통 접미사
+    /// Tries the following strategies in order:
+    /// 0. talk-user-id HTTP header from Cache.db (most reliable)
+    /// 1. Common suffix of FSChatWindowTransparency keys (legacy)
+    /// 2. Direct key lookup (userId, user_id, etc.)
+    /// 3. Reverse SHA-512 hash from plist revision key
+    /// 4. Common suffix of FSChatWindowFrame_ keys
     public static func userId() throws -> Int {
-        // 전략 0: Cache.db에서 talk-user-id 헤더 읽기
+        // Strategy 0: Read talk-user-id header from Cache.db
         if let id = userIdFromCacheDB() {
             return id
         }
@@ -73,7 +73,7 @@ public enum DeviceInfo {
             throw KTalkError.plistParseError
         }
 
-        // 전략 1: FSChatWindowTransparency 키에서 공통 접미사 추출
+        // Strategy 1: Extract common suffix from FSChatWindowTransparency keys
         let transparencyPrefix = "FSChatWindowTransparency"
         let fsChatKeys = plist.keys.filter { $0.hasPrefix(transparencyPrefix) }
         if fsChatKeys.count >= 2 {
@@ -83,21 +83,21 @@ public enum DeviceInfo {
             }
         }
 
-        // 전략 2: 직접 키 조회
+        // Strategy 2: Direct key lookup
         let candidateKeys = ["userId", "user_id", "KAKAO_USER_ID", "userID"]
         for key in candidateKeys {
             if let id = plist[key] as? Int { return id }
             if let str = plist[key] as? String, let id = Int(str) { return id }
         }
 
-        // 전략 3: plist revision 키의 SHA-512 해시 역산
+        // Strategy 3: Reverse SHA-512 hash from plist revision key
         if let hash = activeAccountHash(from: plist) {
             if let id = recoverUserIdFromSHA512(hexHash: hash) {
                 return id
             }
         }
 
-        // 전략 4: FSChatWindowFrame_ 공통 접미사
+        // Strategy 4: FSChatWindowFrame_ common suffix
         let framePrefix = "NSWindow Frame FSChatWindowFrame_"
         let frameKeys = plist.keys.filter { $0.hasPrefix(framePrefix) }
         if frameKeys.count >= 2 {
@@ -107,7 +107,7 @@ public enum DeviceInfo {
             }
         }
 
-        // 전략 5: AlertKakaoIDsList — 후보가 1개면 바로 반환
+        // Strategy 5: AlertKakaoIDsList — return immediately if only one candidate
         if let ids = plist["AlertKakaoIDsList"] as? [Any] {
             let candidates = ids.compactMap { item -> Int? in
                 if let id = item as? Int { return id > 0 ? id : nil }
@@ -120,7 +120,7 @@ public enum DeviceInfo {
         throw KTalkError.userIdNotFound(Array(plist.keys))
     }
 
-    /// plist의 AlertKakaoIDsList에서 후보 사용자 ID 목록을 읽습니다.
+    /// Reads candidate user IDs from the plist's AlertKakaoIDsList.
     public static func candidateUserIds() -> [Int] {
         let plistPath = preferencesPath
         guard FileManager.default.fileExists(atPath: plistPath),
@@ -135,11 +135,11 @@ public enum DeviceInfo {
         }
     }
 
-    /// 컨테이너에서 78자 hex 파일명을 탐색하여 데이터베이스 파일 경로를 반환합니다.
+    /// Searches the container for a 78-character hex filename and returns the database file path.
     public static func discoverDatabaseFile() -> String? {
         let fm = FileManager.default
         guard let entries = try? fm.contentsOfDirectory(atPath: containerPath) else { return nil }
-        // nonisolated(unsafe) 는 Swift 6에서 필요 없음 - try! 는 컴파일 타임 패턴이므로 안전
+        // nonisolated(unsafe) not needed in Swift 6 — try! is safe here as it's a compile-time pattern
         guard let hexPattern = try? NSRegularExpression(pattern: "^[0-9a-f]{78}$") else { return nil }
         for entry in entries {
             let range = NSRange(entry.startIndex..., in: entry)
@@ -147,7 +147,7 @@ public enum DeviceInfo {
                 return "\(containerPath)/\(entry)"
             }
         }
-        // .db 확장자가 있는 hex 파일도 확인
+        // Also check for hex files with .db extension
         guard let hexDbPattern = try? NSRegularExpression(pattern: "^[0-9a-f]{78}\\.db$") else { return nil }
         for entry in entries {
             let range = NSRange(entry.startIndex..., in: entry)
@@ -158,7 +158,7 @@ public enum DeviceInfo {
         return nil
     }
 
-    /// 컨테이너의 데이터베이스 파일 수를 반환합니다.
+    /// Returns the number of database files in the container.
     public static func countDatabaseFiles() -> Int {
         let fm = FileManager.default
         guard let entries = try? fm.contentsOfDirectory(atPath: containerPath) else { return 0 }
@@ -169,7 +169,7 @@ public enum DeviceInfo {
         }.count
     }
 
-    /// plist revision 키에서 활성 계정의 SHA-512 해시를 추출합니다.
+    /// Extracts the SHA-512 hash of the active account from plist revision keys.
     public static func activeAccountHash() -> String? {
         let plistPath = preferencesPath
         guard FileManager.default.fileExists(atPath: plistPath),
@@ -179,9 +179,9 @@ public enum DeviceInfo {
         return activeAccountHash(from: plist)
     }
 
-    /// SHA-512 해시의 원상을 브루트포스로 복원합니다.
-    /// KakaoTalk은 plist 키에 SHA-512(userId) hex를 저장합니다.
-    /// userId는 작은 정수이므로 빠르게 검색 가능합니다 (10초 타임아웃).
+    /// Brute-force recovers the preimage of a SHA-512 hash.
+    /// KakaoTalk stores SHA-512(userId) hex in plist keys.
+    /// userId is a small integer, so the search completes quickly (10-second timeout).
     public static func recoverUserIdFromSHA512(hexHash: String) -> Int? {
         guard hexHash.count == 128 else { return nil }
         var targetBytes = [UInt8](repeating: 0, count: 64)
@@ -207,11 +207,11 @@ public enum DeviceInfo {
         return nil
     }
 
-    // MARK: - Cache.db userId 추출
+    // MARK: - Cache.db userId Extraction
 
-    /// Cache.db의 NSURLCache에서 talk-user-id HTTP 헤더를 읽습니다.
-    /// KakaoTalk 클라이언트는 API 요청 시 talk-user-id 헤더에 userId를 포함하며,
-    /// macOS NSURLCache가 이를 Cache.db에 저장합니다.
+    /// Reads the talk-user-id HTTP header from NSURLCache in Cache.db.
+    /// The KakaoTalk client includes the userId in the talk-user-id header on API requests,
+    /// and macOS NSURLCache stores this in Cache.db.
     private static func userIdFromCacheDB() -> Int? {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let cacheDBPath = "\(home)/Library/Containers/com.kakao.KakaoTalkMac/Data/Library/Caches/Cache.db"
@@ -238,11 +238,11 @@ public enum DeviceInfo {
             let len = sqlite3_column_bytes(stmt, 0)
             let data = Data(bytes: blob, count: Int(len))
 
-            // bplist로 시작하는 plist에서 talk-user-id 값을 찾음
+            // Search for talk-user-id value in bplist-prefixed plists
             if let userId = extractTalkUserIdFromPlist(data) {
                 return userId
             }
-            // 일반 텍스트에서도 검색
+            // Also search in plain text
             if let text = String(data: data, encoding: .utf8),
                let userId = extractTalkUserIdFromText(text) {
                 return userId
@@ -287,7 +287,7 @@ public enum DeviceInfo {
     // MARK: - Private Helpers
 
     private static func activeAccountHash(from plist: [String: Any]) -> String? {
-        // SHA-512("0") = 기본/비어있는 계정의 해시
+        // SHA-512("0") = hash of the default/empty account
         let emptyHash = "31bca02094eb78126a517b206a88c73cfa9ec6f704c7030d18212cace820f025f00bf0ea68dbf3f3a5436ca63b53bf7bf80ad8d5de7d8359d0b7fed9dbc3ab99"
         let prefix = "DESIGNATEDFRIENDSREVISION:"
         for (key, val) in plist where key.hasPrefix(prefix) {
